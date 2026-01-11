@@ -1,69 +1,66 @@
 import { useContext, useState } from 'react'
 
-import Project from '@/entities/project'
+import { toast } from 'sonner'
+
 import { AppContext, AppContextType } from '../context/app-context'
 
-import {
-  Card,
-  CardTitle,
-  CardHeader,
-  CardDescription,
-  CardContent,
-  CardAction,
-} from './ui/card'
-
+import { Label } from './ui/label'
+import { Input } from './ui/input'
 import { Button } from './ui/button'
+import { Separator } from './ui/separator'
+import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group'
 
-import { Trash } from 'lucide-react'
+import { ArrowDownWideNarrow, ArrowUpWideNarrow, Clock } from 'lucide-react'
+import { DataTable } from './projects/data-table'
+import { columns, ProjectDt, StatusFilter } from './projects/columns'
+import Project from '@/entities/project'
 
 export function Projects() {
   const [name, setName] = useState<string>('')
-  const { projects, createProject } = useContext(AppContext) as AppContextType
+  const { projects, createProject, selectedProjectId, setSelectedProjectId } =
+    useContext(AppContext) as AppContextType
+
+  const projectsDataTable = mapProjectsToDataTable(projects)
 
   async function onSubmit() {
+    if (name.length < 5) {
+      return toast.error('Project name must be more descriptive.')
+    }
+
     await createProject(name)
+
+    setName('')
+    toast.success('Project created.')
+  }
+
+  function mapProjectsToDataTable(projects: Project[]): ProjectDt[] {
+    return projects.map((p) => {
+      return {
+        id: p.id,
+        name: p.name,
+        created_at: new Date(p.created_at),
+        deactivated_at: p.deactivated_at ? new Date(p.deactivated_at) : null,
+        last_appointment_at: p.last_appointment_at
+          ? new Date(p.last_appointment_at)
+          : null,
+      }
+    })
   }
 
   return (
-    <section className='border rounded-md p-4'>
-      <div style={{ display: 'flex', gap: 12 }}>
-        <label htmlFor='new-project'>Add project: </label>
-        <input
-          id='new-project'
-          placeholder='test'
+    <section className='border border-collapse rounded-md p-4'>
+      <div className='flex gap-4'>
+        <Input
           value={name}
           onChange={(e) => setName(e.target.value)}
+          placeholder='Create new project...'
+          className='placeholder:text-xs'
         />
-        <button onClick={onSubmit}>Test</button>
+        <Button onClick={onSubmit}>Create project</Button>
       </div>
-      <div>
-        <h2>Existing projects</h2>
-        <div>
-          {projects.map((project) => (
-            <ProjectCard key={project.id} project={project} />
-          ))}
-        </div>
+      <div className='mt-8'>
+        <DataTable columns={columns} data={projectsDataTable} />
       </div>
     </section>
-  )
-}
-
-interface ProjectCardProps {
-  project: Project
-}
-const ProjectCard = ({ project }: ProjectCardProps) => {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{project.name}</CardTitle>
-        <CardDescription>Id: {project.id}</CardDescription>
-      </CardHeader>
-      <CardContent>test</CardContent>
-      <CardAction>
-        <Button variant='outline' size='icon-sm'>
-          <Trash />
-        </Button>
-      </CardAction>
-    </Card>
   )
 }

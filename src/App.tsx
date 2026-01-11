@@ -1,6 +1,7 @@
 import { useContext, useEffect } from 'react'
 
 import { Projects } from './components/projects'
+import { Toaster } from './components/ui/sonner'
 import { Appointments } from './components/appointments'
 import { AppContext, AppContextType } from './context/app-context'
 
@@ -13,12 +14,15 @@ function App() {
   }, [])
 
   return (
-    <main className='dark bg-background text-foreground'>
-      <div className='grid grid-cols-2 gap-4 p-2'>
-        <Projects />
-        <Appointments />
-      </div>
-    </main>
+    <>
+      <main className='dark bg-background text-foreground min-h-screen flex flex-col'>
+        <div className='self-center container grid grid-cols-2 w-full flex-1'>
+          <Projects />
+          <Appointments />
+        </div>
+      </main>
+      <Toaster richColors position='bottom-center' />
+    </>
   )
 }
 

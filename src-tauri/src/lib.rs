@@ -7,7 +7,13 @@ pub fn run() {
             version: 1,
             description: "create projects and appointments table",
             sql: r#"
-                    CREATE TABLE IF NOT EXISTS projects (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL);
+                    CREATE TABLE IF NOT EXISTS projects (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        name TEXT NOT NULL,
+                        created_at TEXT NOT NULL,
+                        last_appointment_at TEXT,
+                        deactivated_at TEXT
+                    );
                     CREATE TABLE IF NOT EXISTS appointments (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         title TEXT NOT NULL,
