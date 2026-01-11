@@ -1,7 +1,5 @@
 use tauri_plugin_sql::{Migration, MigrationKind};
 
-mod commands;
-
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let migrations = vec![
@@ -30,11 +28,7 @@ pub fn run() {
                 .add_migrations("sqlite:data.db", migrations)
                 .build()
         )
-        .invoke_handler(tauri::generate_handler![
-            commands::create_project,
-            commands::update_project,
-            commands::delete_project
-        ])
+        .invoke_handler(tauri::generate_handler![])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

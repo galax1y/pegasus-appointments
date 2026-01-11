@@ -5,8 +5,8 @@ export function Appointments() {
   const { appointments } = useContext(AppContext) as AppContextType
 
   return (
-    <section className='grid-item'>
-      <div className='bigode'>
+    <section>
+      <div>
         <label htmlFor='new-appointment'>Add appointment: </label>
         <input id='new-appointment' />
       </div>
