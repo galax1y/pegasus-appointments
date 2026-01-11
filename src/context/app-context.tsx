@@ -3,6 +3,8 @@ import Database from '@tauri-apps/plugin-sql'
 import React from 'react'
 import Appointment from '../entities/appointment'
 import Project from '../entities/project'
+import { addDays, endOfDay, isWithinInterval, startOfDay } from 'date-fns'
+import { Activity } from '@/models/activity'
 
 export interface AppContextType {
   projects: Project[]
@@ -12,13 +14,18 @@ export interface AppContextType {
   deleteProject: (id: number) => Promise<void>
 
   appointments: Appointment[]
-  // createAppointment: (name: string) => Promise<void>
-  // readAppointments: () => Promise<void>
+  createAppointment: (
+    title: string,
+    date: string,
+    hours_allocated: number
+  ) => Promise<void>
+  readAppointments: () => Promise<void>
   // updateAppointment: (name: string) => Promise<void>
   // deleteAppointment: (id: number) => Promise<void>
 
   selectedProjectId: number | null
   setSelectedProjectId: React.Dispatch<React.SetStateAction<number | null>>
+  getActivitySummaryInInterval: (start: Date, end: Date) => Promise<Activity[]>
 }
 
 export const AppContext = React.createContext<AppContextType | null>(null)
@@ -63,7 +70,7 @@ export const AppContextProvider: React.FC<{
     const database = await Database.load('sqlite:data.db')
 
     const data = await database.select('SELECT * FROM projects')
-    console.log('readProjects:', data)
+
     setProjects(data as Project[])
   }
 
@@ -102,7 +109,90 @@ export const AppContextProvider: React.FC<{
       throw new Error('Error: Something went wrong while deleting the project')
     }
 
+    refreshData()
+  }
+
+  const createAppointment = async (
+    title: string,
+    date: string,
+    hours_allocated: number
+  ) => {
+    const database = await Database.load('sqlite:data.db')
+
+    if (!selectedProjectId) {
+      throw new Error('Error: No selected project')
+    }
+
+    const response = await database.execute(
+      'INSERT INTO appointments (title, date, hours_allocated, project_id) VALUES ($1, $2, $3, $4)',
+      [title, date, hours_allocated, selectedProjectId]
+    )
+
+    if (response.rowsAffected === 0) {
+      throw new Error('Error: Something went wrong while deleting the project')
+    }
+
+    await database.execute(
+      'UPDATE projects SET last_appointment_at = $1 WHERE id = $2',
+      [new Date().toISOString(), selectedProjectId]
+    )
+
+    refreshData()
+  }
+
+  const readAppointments = async () => {
+    const database = await Database.load('sqlite:data.db')
+
+    const sql =
+      'SELECT appointments.* FROM appointments JOIN projects ON projects.id = appointments.project_id WHERE projects.deactivated_at IS NULL'
+
+    const data: Appointment[] = await database.select(sql)
+
+    setAppointments(data as Appointment[])
+  }
+
+  async function getActivitySummaryInInterval(
+    start: Date,
+    end: Date
+  ): Promise<Activity[]> {
+    const database = await Database.load('sqlite:data.db')
+
+    const appointments = (await database.select(
+      'SELECT * FROM appointments WHERE date BETWEEN $1 AND $2',
+      [startOfDay(start).toISOString(), endOfDay(end).toISOString()]
+    )) as Appointment[]
+
+    let currentDate = startOfDay(start)
+    const endDate = endOfDay(end)
+
+    const activities: Activity[] = []
+
+    while (currentDate < endDate) {
+      const appointmentsInCurrentDate = appointments.filter((a) =>
+        isWithinInterval(a.date, {
+          start: currentDate,
+          end: endOfDay(currentDate),
+        })
+      )
+
+      activities.push({
+        date: currentDate.toISOString(),
+        hours_allocated: appointmentsInCurrentDate.reduce(
+          (agg, appointment) => agg + appointment.hours_allocated,
+          0
+        ),
+        appointments: appointmentsInCurrentDate,
+      })
+
+      currentDate = addDays(currentDate, 1)
+    }
+
+    return activities
+  }
+
+  const refreshData = () => {
     readProjects()
+    readAppointments
   }
 
   return (
@@ -114,12 +204,13 @@ export const AppContextProvider: React.FC<{
         // updateProject,
         deleteProject,
         appointments,
-        // createAppointment,
-        // readAppointments,
+        createAppointment,
+        readAppointments,
         // updateAppointment,
         // deleteAppointment,
         selectedProjectId,
         setSelectedProjectId,
+        getActivitySummaryInInterval,
       }}
     >
       {children}

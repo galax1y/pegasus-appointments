@@ -1,32 +1,31 @@
 'use client'
 
+import React, { useState } from 'react'
+
+import { Input } from '../ui/input'
+import { Button } from '../ui/button'
+
 import {
   ColumnDef,
-  ColumnFiltersState,
   flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getSortedRowModel,
   SortingState,
   useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  ColumnFiltersState,
+  getFilteredRowModel,
 } from '@tanstack/react-table'
 
 import {
   Table,
-  TableBody,
+  TableRow,
   TableCell,
   TableHead,
+  TableBody,
   TableHeader,
-  TableRow,
 } from '@/components/ui/table'
-import React, { useState } from 'react'
-import { ArrowUpWideNarrow, ArrowDownWideNarrow, Clock } from 'lucide-react'
-import { Label } from 'recharts'
-import { Button } from '../ui/button'
-import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group'
-import { ProjectDt, StatusFilter } from './columns'
-import { Separator } from '../ui/separator'
-import { Input } from '../ui/input'
+
+import { StatusFilter } from './columns'
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]

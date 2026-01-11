@@ -2,29 +2,24 @@ import { useContext, useState } from 'react'
 
 import { toast } from 'sonner'
 
+import Project from '@/entities/project'
 import { AppContext, AppContextType } from '../context/app-context'
 
-import { Label } from './ui/label'
 import { Input } from './ui/input'
 import { Button } from './ui/button'
-import { Separator } from './ui/separator'
-import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group'
 
-import { ArrowDownWideNarrow, ArrowUpWideNarrow, Clock } from 'lucide-react'
 import { DataTable } from './projects/data-table'
-import { columns, ProjectDt, StatusFilter } from './projects/columns'
-import Project from '@/entities/project'
+import { columns, ProjectDt } from './projects/columns'
 
 export function Projects() {
   const [name, setName] = useState<string>('')
-  const { projects, createProject, selectedProjectId, setSelectedProjectId } =
-    useContext(AppContext) as AppContextType
+  const { projects, createProject } = useContext(AppContext) as AppContextType
 
   const projectsDataTable = mapProjectsToDataTable(projects)
 
   async function onSubmit() {
     if (name.length < 5) {
-      return toast.error('Project name must be more descriptive.')
+      return toast.error('Project name should have at least 5 characters.')
     }
 
     await createProject(name)
@@ -48,7 +43,7 @@ export function Projects() {
   }
 
   return (
-    <section className='border border-collapse rounded-md p-4'>
+    <section className='rounded-md'>
       <div className='flex gap-4'>
         <Input
           value={name}

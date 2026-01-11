@@ -16,7 +16,7 @@ function App() {
   return (
     <>
       <main className='dark bg-background text-foreground min-h-screen flex flex-col'>
-        <div className='self-center container grid grid-cols-2 w-full flex-1'>
+        <div className='self-center container grid lg:grid-cols-2 w-full flex-1 gap-6 my-6'>
           <Projects />
           <Appointments />
         </div>

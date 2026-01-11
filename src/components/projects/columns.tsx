@@ -1,20 +1,13 @@
+import { useContext } from 'react'
+import { AppContext, AppContextType } from '@/context/app-context'
+
+import { toast } from 'sonner'
 import { format } from 'date-fns'
 import { ColumnDef } from '@tanstack/react-table'
 
-import {
-  CircleX,
-  CircleCheck,
-  MoreHorizontal,
-  ArrowUpDown,
-  Trash,
-  ArrowLeft,
-  ArrowUpNarrowWide,
-  ArrowDownNarrowWide,
-  ArrowUpWideNarrow,
-} from 'lucide-react'
-
 import { Button } from '../ui/button'
 import { Checkbox } from '../ui/checkbox'
+import { NewAppointmentModal } from '../appointments/new-appointment-modal'
 
 import {
   DropdownMenu,
@@ -24,9 +17,15 @@ import {
   DropdownMenuContent,
   DropdownMenuSeparator,
 } from '../ui/dropdown-menu'
-import { useContext } from 'react'
-import { AppContext, AppContextType } from '@/context/app-context'
-import { toast } from 'sonner'
+
+import {
+  CircleX,
+  CircleCheck,
+  ArrowUpDown,
+  MoreHorizontal,
+  ArrowUpNarrowWide,
+  ArrowUpWideNarrow,
+} from 'lucide-react'
 
 export type ProjectDt = {
   id: number
@@ -48,8 +47,14 @@ export const columns: ColumnDef<ProjectDt>[] = [
         <Checkbox
           checked={row.getIsSelected()}
           onCheckedChange={(checked) => {
-            table.setRowSelection(checked ? { [row.id]: true } : {})
-            setSelectedProjectId(checked ? row.original.id : null)
+            if (checked) {
+              table.resetRowSelection()
+              table.setRowSelection({ [row.id]: true })
+              setSelectedProjectId(row.original.id)
+            } else {
+              table.resetRowSelection()
+              setSelectedProjectId(null)
+            }
           }}
           className='rounded-full size-5 border-2'
           aria-label='Select row'
@@ -65,7 +70,7 @@ export const columns: ColumnDef<ProjectDt>[] = [
           variant='ghost'
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
         >
-          Project
+          Project name
           <ArrowUpDown className='ml-2 h-4 w-4' />
         </Button>
       )
@@ -101,7 +106,9 @@ export const columns: ColumnDef<ProjectDt>[] = [
         )
       }
 
-      return format(last_appointment_at, 'PP')
+      return (
+        <span className='text-xs'>{format(last_appointment_at, 'PP')}</span>
+      )
     },
   },
   {
@@ -125,9 +132,7 @@ export const columns: ColumnDef<ProjectDt>[] = [
     },
     cell: ({ row }) => {
       const { created_at } = row.original
-      return (
-        <span className='text-xs'>{format(created_at, 'PP HH:mm:ss')}</span>
-      )
+      return <span className='text-xs'>{format(created_at, 'PP HH:mm')}</span>
     },
   },
   {
@@ -156,9 +161,11 @@ export const columns: ColumnDef<ProjectDt>[] = [
   },
   {
     id: 'actions',
-    cell: ({ row }) => {
+    cell: ({ row, table }) => {
       const { id, deactivated_at } = row.original
-      const { deleteProject } = useContext(AppContext) as AppContextType
+      const { deleteProject, setSelectedProjectId } = useContext(
+        AppContext
+      ) as AppContextType
 
       const handleToggleActive = () => {
         return toast.promise(deleteProject(id), {
@@ -172,6 +179,11 @@ export const columns: ColumnDef<ProjectDt>[] = [
         })
       }
 
+      const handleNewAppointment = () => {
+        setSelectedProjectId(id)
+        table.setRowSelection({ [row.id]: true })
+      }
+
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -183,6 +195,19 @@ export const columns: ColumnDef<ProjectDt>[] = [
           <DropdownMenuContent className='dark' align='end'>
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <NewAppointmentModal
+                selectedProjectId={row.original.id}
+                trigger={
+                  <span
+                    onClick={handleNewAppointment}
+                    className="focus:bg-accent hover:bg-accent focus:text-accent-foreground data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 dark:data-[variant=destructive]:focus:bg-destructive/20 data-[variant=destructive]:focus:text-destructive data-[variant=destructive]:*:[svg]:!text-destructive [&_svg:not([class*='text-'])]:text-muted-foreground relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[inset]:pl-8 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
+                  >
+                    Add appointment
+                  </span>
+                }
+              />
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={handleToggleActive}>
               {deactivated_at ? 'Reactivate project' : 'Deactivate project'}
             </DropdownMenuItem>
