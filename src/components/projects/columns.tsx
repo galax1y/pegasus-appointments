@@ -141,8 +141,6 @@ export const columns: ColumnDef<ProjectDt>[] = [
     filterFn: (row, columnId, filterValue: StatusFilter) => {
       const value = row.getValue<Date | null>(columnId)
 
-      console.log('filterValue:', filterValue)
-
       if (filterValue === 'all') return true
       if (filterValue === 'active') return value === null
       if (filterValue === 'inactive') return value !== null

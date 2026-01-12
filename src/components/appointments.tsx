@@ -1,6 +1,7 @@
 import { useContext, useEffect } from 'react'
 import { AppContext, AppContextType } from '../context/app-context'
 
+import { toast } from 'sonner'
 import { format } from 'date-fns'
 
 import { Button } from './ui/button'
@@ -25,12 +26,26 @@ import {
 } from 'lucide-react'
 
 export function Appointments() {
-  const { projects, selectedProjectId, appointments, readAppointments } =
-    useContext(AppContext) as AppContextType
+  const {
+    projects,
+    selectedProjectId,
+    appointments,
+    readAppointments,
+    deleteAppointment,
+  } = useContext(AppContext) as AppContextType
 
   useEffect(() => {
     readAppointments()
   }, [])
+
+  const handleDelete = async (id: number) => {
+    return toast.promise(deleteAppointment(id), {
+      loading: 'Deleting appointment...',
+      success: 'Appointment was successfully deleted.',
+      error: (err) =>
+        `Something went wrong while deleting the appointment. ${err}`,
+    })
+  }
 
   return (
     <section className='rounded-md h-fit'>
@@ -117,7 +132,10 @@ export function Appointments() {
                         </DropdownMenuTrigger>
 
                         <DropdownMenuContent className='dark' align='end'>
-                          <DropdownMenuItem className='text-destructive'>
+                          <DropdownMenuItem
+                            onClick={() => handleDelete(a.id)}
+                            className='text-destructive'
+                          >
                             <Trash className='mr-2 h-4 w-4 text-destructive' />
                             Delete
                           </DropdownMenuItem>

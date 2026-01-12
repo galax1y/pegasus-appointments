@@ -1,10 +1,18 @@
 import Database from '@tauri-apps/plugin-sql'
 
 import React from 'react'
-import Appointment from '../entities/appointment'
+
 import Project from '../entities/project'
-import { addDays, endOfDay, isWithinInterval, startOfDay } from 'date-fns'
 import { Activity } from '@/models/activity'
+import Appointment from '../entities/appointment'
+
+import {
+  addDays,
+  endOfDay,
+  isBefore,
+  startOfDay,
+  isWithinInterval,
+} from 'date-fns'
 
 export interface AppContextType {
   projects: Project[]
@@ -20,8 +28,8 @@ export interface AppContextType {
     hours_allocated: number
   ) => Promise<void>
   readAppointments: () => Promise<void>
+  deleteAppointment: (id: number) => Promise<void>
   // updateAppointment: (name: string) => Promise<void>
-  // deleteAppointment: (id: number) => Promise<void>
 
   selectedProjectId: number | null
   setSelectedProjectId: React.Dispatch<React.SetStateAction<number | null>>
@@ -132,9 +140,27 @@ export const AppContextProvider: React.FC<{
       throw new Error('Error: Something went wrong while deleting the project')
     }
 
+    let rows: Pick<Project, 'last_appointment_at'>[] = await database.select(
+      'SELECT last_appointment_at FROM projects WHERE id = $1 ORDER BY last_appointment_at DESC LIMIT 1',
+      [selectedProjectId]
+    )
+
+    let latestAppointment = rows[0].last_appointment_at
+
+    if (!rows[0].last_appointment_at) {
+      latestAppointment = date
+    }
+
+    if (
+      latestAppointment &&
+      isBefore(new Date(latestAppointment), new Date(date))
+    ) {
+      latestAppointment = date
+    }
+
     await database.execute(
       'UPDATE projects SET last_appointment_at = $1 WHERE id = $2',
-      [new Date().toISOString(), selectedProjectId]
+      [latestAppointment, selectedProjectId]
     )
 
     refreshData()
@@ -149,6 +175,46 @@ export const AppContextProvider: React.FC<{
     const data: Appointment[] = await database.select(sql)
 
     setAppointments(data as Appointment[])
+  }
+
+  const deleteAppointment = async (id: number) => {
+    const database = await Database.load('sqlite:data.db')
+
+    const response = await database.execute(
+      `DELETE FROM appointments WHERE id = $1`,
+      [id]
+    )
+
+    if (response.rowsAffected === 0) {
+      throw new Error(
+        'Error: Something went wrong while deleting the appointment'
+      )
+    }
+
+    const rows: any[] = await database.select(
+      `
+        SELECT date
+        FROM appointments
+        WHERE project_id = $1
+        ORDER BY date DESC
+        LIMIT 1
+      `,
+      [selectedProjectId]
+    )
+
+    const latestAppointment: string | null =
+      rows.length > 0 ? rows[0].date : null
+
+    await database.execute(
+      `
+        UPDATE projects
+        SET last_appointment_at = $1
+        WHERE id = $2
+      `,
+      [latestAppointment, selectedProjectId]
+    )
+
+    refreshData()
   }
 
   async function getActivitySummaryInInterval(
@@ -192,7 +258,7 @@ export const AppContextProvider: React.FC<{
 
   const refreshData = () => {
     readProjects()
-    readAppointments
+    readAppointments()
   }
 
   return (
@@ -207,7 +273,7 @@ export const AppContextProvider: React.FC<{
         createAppointment,
         readAppointments,
         // updateAppointment,
-        // deleteAppointment,
+        deleteAppointment,
         selectedProjectId,
         setSelectedProjectId,
         getActivitySummaryInInterval,
