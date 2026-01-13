@@ -14,27 +14,24 @@ export function Navbar() {
         className='flex items-center justify-between h-full'
       >
         <img
-          className='w-6 h-6 ml-2 outline-2 outline-primary rounded-full'
+          className='w-6 h-6 ml-2 outline-2 border-2 border-primary/40 outline-primary/20 ring-2 ring-primary/10 rounded-full'
           src='favicon.ico'
         />
-        <h1 className='font-pretty font-medium text-primary text-xl backdrop-blur-2xl tracking-wide space select-none'>
-          Pegasus
-        </h1>
 
         <div className='flex items-center text-foreground'>
           <ModeToggle />
 
           <Button
             size='icon-sm'
-            className='group rounded-none rounded-l-sm bg-input text-foreground hover:bg-muted transition-colors'
+            className='group rounded-none bg-accent text-foreground hover:bg-card transition-colors'
             onClick={() => appWindow.minimize()}
           >
-            <MinusIcon className='opacity-70 group-hover:opacity-100' />
+            <MinusIcon className='group-hover:opacity-100' />
           </Button>
 
           <Button
             size='icon-sm'
-            className='group rounded-none bg-input text-foreground hover:bg-muted transition-colors'
+            className='group rounded-none bg-accent text-foreground hover:bg-card transition-colors'
             onClick={() => appWindow.toggleMaximize()}
           >
             <SquareIcon className='opacity-70 group-hover:opacity-100' />
@@ -42,7 +39,7 @@ export function Navbar() {
 
           <Button
             size='icon-sm'
-            className='group rounded-none bg-input text-foreground hover:bg-destructive hover:text-destructive-foreground transition-colors'
+            className='group rounded-none bg-accent text-foreground hover:bg-destructive hover:text-destructive-foreground transition-colors'
             onClick={() => appWindow.close()}
           >
             <Cross1Icon className='opacity-70 group-hover:opacity-100' />

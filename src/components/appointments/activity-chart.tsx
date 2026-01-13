@@ -21,10 +21,8 @@ import {
 } from '@/components/ui/card'
 
 import {
-  ChartLegend,
   ChartTooltip,
   ChartContainer,
-  ChartLegendContent,
   ChartTooltipContent,
   type ChartConfig,
 } from '@/components/ui/chart'
@@ -38,18 +36,12 @@ import {
 } from '@/components/ui/select'
 
 import { ChevronDownIcon } from 'lucide-react'
+import { ptBR } from 'date-fns/locale/pt-BR'
 
 const chartConfig = {
-  visitors: {
-    label: 'Visitors',
-  },
-  desktop: {
-    label: 'Desktop',
-    color: 'var(--chart-1)',
-  },
-  hours: {
-    label: 'hours',
-    color: 'var(--chart-2)',
+  hours_allocated: {
+    label: 'Hours allocated',
+    color: 'var(--chart-3)',
   },
 } satisfies ChartConfig
 
@@ -67,6 +59,7 @@ export function ChartAreaInteractive() {
 
   const filteredData = activities.filter((item) => {
     const date = new Date(item.date)
+
     let daysToSubtract = 90
     if (timeRange === '30d') {
       daysToSubtract = 30
@@ -91,7 +84,7 @@ export function ChartAreaInteractive() {
         <div className='grid flex-1 gap-1'>
           <CardTitle>Appointments</CardTitle>
           <CardDescription>
-            Showing appointment allocated hours for the selected reference date
+            Showing allocated hours for the selected date
           </CardDescription>
         </div>
         <Popover>
@@ -154,27 +147,15 @@ export function ChartAreaInteractive() {
         >
           <BarChart data={filteredData}>
             <defs>
-              <linearGradient id='fillDesktop' x1='0' y1='0' x2='0' y2='1'>
-                <stop
-                  offset='5%'
-                  stopColor='var(--color-desktop)'
-                  stopOpacity={0.8}
-                />
-                <stop
-                  offset='95%'
-                  stopColor='var(--color-desktop)'
-                  stopOpacity={0.1}
-                />
-              </linearGradient>
               <linearGradient id='fillHours' x1='0' y1='0' x2='0' y2='1'>
                 <stop
                   offset='5%'
-                  stopColor='var(--color-hours)'
+                  stopColor='var(--color-hours_allocated)'
                   stopOpacity={0.8}
                 />
                 <stop
                   offset='95%'
-                  stopColor='var(--color-hours)'
+                  stopColor='var(--color-hours_allocated)'
                   stopOpacity={0.1}
                 />
               </linearGradient>
@@ -182,8 +163,8 @@ export function ChartAreaInteractive() {
             <CartesianGrid vertical={false} />
             <XAxis
               dataKey='date'
-              tickLine={false}
-              axisLine={false}
+              tickLine={true}
+              axisLine={true}
               tickMargin={8}
               minTickGap={32}
               tickFormatter={(value) => {
@@ -196,10 +177,34 @@ export function ChartAreaInteractive() {
             />
             <ChartTooltip
               cursor={false}
+              labelClassName='border-b mb-1'
               content={
                 <ChartTooltipContent
                   labelFormatter={(value) => {
-                    return format(value, 'P')
+                    return (
+                      <span>
+                        {format(new Date(value), 'P', { locale: ptBR })}
+                      </span>
+                    )
+                  }}
+                  formatter={(value, _, i) => {
+                    return (
+                      <div className='flex flex-col'>
+                        <div className='whitespace-nowrap flex items-center'>
+                          <div className='w-2.5 h-2.5 bg-chart-3 rounded-xs mr-2' />
+                          <span>{value} Hours</span>
+                        </div>
+                        <div className='whitespace-nowrap flex items-center'>
+                          <div className='w-2.5 h-2.5 bg-chart-2 rounded-xs mr-2' />
+                          <span>
+                            {i.payload.appointments.length}{' '}
+                            {i.payload.appointments.length > 0
+                              ? 'Appointment'
+                              : 'Appointments'}
+                          </span>
+                        </div>
+                      </div>
+                    )
                   }}
                   indicator='dot'
                 />
@@ -208,11 +213,11 @@ export function ChartAreaInteractive() {
             <Bar
               dataKey='hours_allocated'
               fill='url(#fillHours)'
-              stroke='var(--color-hours)'
+              stroke='var(--color-hours_allocated)'
               stackId='a'
             />
 
-            <ChartLegend content={<ChartLegendContent />} />
+            {/* <ChartLegend content={<ChartLegendContent />} /> */}
           </BarChart>
         </ChartContainer>
       </CardContent>

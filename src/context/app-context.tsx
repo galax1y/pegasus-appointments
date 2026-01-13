@@ -18,7 +18,7 @@ export interface AppContextType {
   projects: Project[]
   createProject: (name: string) => Promise<void>
   readProjects: () => Promise<void>
-  // updateProject: (id: number, name: string) => Promise<void>
+  updateProject: (id: number, name: string) => Promise<void>
   deleteProject: (id: number) => Promise<void>
 
   appointments: Appointment[]
@@ -75,6 +75,7 @@ export const AppContextProvider: React.FC<{
   }
 
   const readProjects = async () => {
+    console.log('hey')
     const database = await Database.load('sqlite:data.db')
 
     const data = await database.select('SELECT * FROM projects')
@@ -82,18 +83,20 @@ export const AppContextProvider: React.FC<{
     setProjects(data as Project[])
   }
 
-  // const updateProject = async (id: number, name: string) => {
-  //   const database = await Database.load('sqlite:data.db')
+  const updateProject = async (id: number, name: string) => {
+    const database = await Database.load('sqlite:data.db')
 
-  //   const response = await database.execute(
-  //     'UPDATE project SET name = $1 WHERE id = $2',
-  //     [name, id]
-  //   )
+    const response = await database.execute(
+      'UPDATE projects SET name = $1 WHERE id = $2',
+      [name, id]
+    )
 
-  //   if (response.rowsAffected === 0) {
-  //     throw new Error('Error: Something went wrong while updating the project')
-  //   }
-  // }
+    if (response.rowsAffected === 0) {
+      throw new Error('Error: Something went wrong while updating the project')
+    }
+
+    readProjects()
+  }
 
   const deleteProject = async (id: number) => {
     const database = await Database.load('sqlite:data.db')
@@ -267,7 +270,7 @@ export const AppContextProvider: React.FC<{
         projects,
         createProject,
         readProjects,
-        // updateProject,
+        updateProject,
         deleteProject,
         appointments,
         createAppointment,

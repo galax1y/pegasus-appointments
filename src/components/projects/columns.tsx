@@ -1,4 +1,4 @@
-import { useContext } from 'react'
+import { useContext, useState } from 'react'
 import { AppContext, AppContextType } from '@/context/app-context'
 
 import { toast } from 'sonner'
@@ -26,6 +26,7 @@ import {
   ArrowUpNarrowWide,
   ArrowUpWideNarrow,
 } from 'lucide-react'
+import { Input } from '../ui/input'
 
 export type ProjectDt = {
   id: number
@@ -73,6 +74,27 @@ export const columns: ColumnDef<ProjectDt>[] = [
           Project name
           <ArrowUpDown className='ml-2 h-4 w-4' />
         </Button>
+      )
+    },
+    cell: ({ row }) => {
+      const [value, setValue] = useState(row.original.name)
+      const { updateProject } = useContext(AppContext) as AppContextType
+
+      const handleBlur = () => {
+        if (value !== row.original.name) {
+          // 🔁 Update project name here
+          updateProject(row.original.id, value)
+          toast.info('Update name')
+        }
+      }
+
+      return (
+        <Input
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onBlur={handleBlur}
+          className='h-8 m-0 border border-input/75 bg-input shadow-md'
+        />
       )
     },
   },
