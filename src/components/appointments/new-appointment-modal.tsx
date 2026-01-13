@@ -71,14 +71,20 @@ export function NewAppointmentModal({
         return
       }
 
-      await createAppointment(
-        value.title,
-        date.toISOString(),
-        value.hours_allocated
+      toast.promise(
+        createAppointment(
+          value.title,
+          date.toISOString(),
+          value.hours_allocated
+        ),
+        {
+          success: () => {
+            setOpen(false)
+            return 'Appointment was created successfully.'
+          },
+          error: 'Something went wrong while creating the appointment.',
+        }
       )
-
-      toast.success(`Appointment was submitted successfully.`)
-      setOpen(false)
     },
     onSubmitInvalid: () => {
       toast.error('Please review invalid fields.')

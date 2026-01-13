@@ -26,21 +26,11 @@ import {
 } from 'lucide-react'
 
 export function Appointments() {
-  const {
-    projects,
-    selectedProjectId,
-    appointments,
-    readAppointments,
-    deleteAppointment,
-  } = useContext(AppContext) as AppContextType
-
-  useEffect(() => {
-    readAppointments()
-  }, [])
+  const { projects, selectedProjectId, appointments, deleteAppointment } =
+    useContext(AppContext) as AppContextType
 
   const handleDelete = async (id: number) => {
     return toast.promise(deleteAppointment(id), {
-      loading: 'Deleting appointment...',
       success: 'Appointment was successfully deleted.',
       error: (err) =>
         `Something went wrong while deleting the appointment. ${err}`,

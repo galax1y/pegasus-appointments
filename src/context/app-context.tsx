@@ -1,6 +1,6 @@
 import Database from '@tauri-apps/plugin-sql'
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 
 import Project from '../entities/project'
 import { Activity } from '@/models/activity'
@@ -43,17 +43,25 @@ export const AppContextProvider: React.FC<{
 }> = ({ children }) => {
   const [projects, setProjects] = React.useState<Project[]>([])
   const [appointments, setAppointments] = React.useState<Appointment[]>([])
-
   const [selectedProjectId, setSelectedProjectId] = React.useState<
     number | null
   >(null)
 
-  const createProject = async (name: string) => {
-    const database = await Database.load('sqlite:data.db')
+  const [db, setDb] = useState<Database | null>(null)
+  useEffect(() => {
+    Database.load('sqlite:data.db')
+      .then((result) => setDb(result))
+      .catch((err) => console.error(`Error while loading the database: ${err}`))
+  }, [])
 
+  if (db === null) {
+    return <div>Loading database...</div>
+  }
+
+  const createProject = async (name: string) => {
     const createdAt = new Date().toISOString()
 
-    const response = await database.execute(
+    const response = await db.execute(
       'INSERT INTO projects (name, created_at, last_appointment_at) VALUES ($1, $2, $3)',
       [name, createdAt, null]
     )
@@ -75,18 +83,13 @@ export const AppContextProvider: React.FC<{
   }
 
   const readProjects = async () => {
-    console.log('hey')
-    const database = await Database.load('sqlite:data.db')
-
-    const data = await database.select('SELECT * FROM projects')
+    const data = await db.select('SELECT * FROM projects')
 
     setProjects(data as Project[])
   }
 
   const updateProject = async (id: number, name: string) => {
-    const database = await Database.load('sqlite:data.db')
-
-    const response = await database.execute(
+    const response = await db.execute(
       'UPDATE projects SET name = $1 WHERE id = $2',
       [name, id]
     )
@@ -99,11 +102,9 @@ export const AppContextProvider: React.FC<{
   }
 
   const deleteProject = async (id: number) => {
-    const database = await Database.load('sqlite:data.db')
-
     const now = new Date()
 
-    const response = await database.execute(
+    const response = await db.execute(
       `
         UPDATE projects
         SET deactivated_at = 
@@ -128,13 +129,11 @@ export const AppContextProvider: React.FC<{
     date: string,
     hours_allocated: number
   ) => {
-    const database = await Database.load('sqlite:data.db')
-
     if (!selectedProjectId) {
       throw new Error('Error: No selected project')
     }
 
-    const response = await database.execute(
+    const response = await db.execute(
       'INSERT INTO appointments (title, date, hours_allocated, project_id) VALUES ($1, $2, $3, $4)',
       [title, date, hours_allocated, selectedProjectId]
     )
@@ -143,7 +142,7 @@ export const AppContextProvider: React.FC<{
       throw new Error('Error: Something went wrong while deleting the project')
     }
 
-    let rows: Pick<Project, 'last_appointment_at'>[] = await database.select(
+    let rows: Pick<Project, 'last_appointment_at'>[] = await db.select(
       'SELECT last_appointment_at FROM projects WHERE id = $1 ORDER BY last_appointment_at DESC LIMIT 1',
       [selectedProjectId]
     )
@@ -161,7 +160,7 @@ export const AppContextProvider: React.FC<{
       latestAppointment = date
     }
 
-    await database.execute(
+    await db.execute(
       'UPDATE projects SET last_appointment_at = $1 WHERE id = $2',
       [latestAppointment, selectedProjectId]
     )
@@ -170,20 +169,16 @@ export const AppContextProvider: React.FC<{
   }
 
   const readAppointments = async () => {
-    const database = await Database.load('sqlite:data.db')
-
     const sql =
       'SELECT appointments.* FROM appointments JOIN projects ON projects.id = appointments.project_id WHERE projects.deactivated_at IS NULL'
 
-    const data: Appointment[] = await database.select(sql)
+    const data: Appointment[] = await db.select(sql)
 
     setAppointments(data as Appointment[])
   }
 
   const deleteAppointment = async (id: number) => {
-    const database = await Database.load('sqlite:data.db')
-
-    const response = await database.execute(
+    const response = await db.execute(
       `DELETE FROM appointments WHERE id = $1`,
       [id]
     )
@@ -194,7 +189,7 @@ export const AppContextProvider: React.FC<{
       )
     }
 
-    const rows: any[] = await database.select(
+    const rows: any[] = await db.select(
       `
         SELECT date
         FROM appointments
@@ -208,7 +203,7 @@ export const AppContextProvider: React.FC<{
     const latestAppointment: string | null =
       rows.length > 0 ? rows[0].date : null
 
-    await database.execute(
+    await db.execute(
       `
         UPDATE projects
         SET last_appointment_at = $1
@@ -220,13 +215,11 @@ export const AppContextProvider: React.FC<{
     refreshData()
   }
 
-  async function getActivitySummaryInInterval(
+  const getActivitySummaryInInterval = async (
     start: Date,
     end: Date
-  ): Promise<Activity[]> {
-    const database = await Database.load('sqlite:data.db')
-
-    const appointments = (await database.select(
+  ): Promise<Activity[]> => {
+    const appointments = (await db.select(
       'SELECT * FROM appointments WHERE date BETWEEN $1 AND $2',
       [startOfDay(start).toISOString(), endOfDay(end).toISOString()]
     )) as Appointment[]

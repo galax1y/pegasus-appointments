@@ -2,13 +2,14 @@ import { getCurrentWindow } from '@tauri-apps/api/window'
 
 import { Button } from './ui/button'
 import { ModeToggle } from './mode-toggle'
+
 import { Cross1Icon, MinusIcon, SquareIcon } from '@radix-ui/react-icons'
 
 export function Navbar() {
   const appWindow = getCurrentWindow()
 
   return (
-    <nav className='relative h-8 w-full backdrop-blur border-b shadow-md'>
+    <nav className='relative h-8 w-full backdrop-blur border-b shadow-sm'>
       <div
         data-tauri-drag-region
         className='flex items-center justify-between h-full'

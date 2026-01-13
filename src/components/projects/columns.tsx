@@ -82,9 +82,11 @@ export const columns: ColumnDef<ProjectDt>[] = [
 
       const handleBlur = () => {
         if (value !== row.original.name) {
-          // 🔁 Update project name here
-          updateProject(row.original.id, value)
-          toast.info('Update name')
+          toast.promise(updateProject(row.original.id, value), {
+            success: `Project was renamed to '${value}'.`,
+            error: (err) =>
+              `Something went wrong while renaming the project. ${err}`,
+          })
         }
       }
 

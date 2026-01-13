@@ -5,8 +5,9 @@ import { AppContext, AppContextType } from '@/context/app-context'
 
 import { Activity } from '@/models/activity'
 
-import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts'
 import { addMonths, format } from 'date-fns'
+import { ptBR } from 'date-fns/locale/pt-BR'
+import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts'
 
 import { Button } from '../ui/button'
 import { Calendar } from '../ui/calendar'
@@ -36,7 +37,6 @@ import {
 } from '@/components/ui/select'
 
 import { ChevronDownIcon } from 'lucide-react'
-import { ptBR } from 'date-fns/locale/pt-BR'
 
 const chartConfig = {
   hours_allocated: {
@@ -55,7 +55,7 @@ export function ChartAreaInteractive() {
 
   const [activities, setActivities] = React.useState<Activity[]>([])
 
-  const [timeRange, setTimeRange] = React.useState('90d')
+  const [timeRange, setTimeRange] = React.useState('30d')
 
   const filteredData = activities.filter((item) => {
     const date = new Date(item.date)
@@ -176,7 +176,7 @@ export function ChartAreaInteractive() {
               }}
             />
             <ChartTooltip
-              cursor={false}
+              cursor={true}
               labelClassName='border-b mb-1'
               content={
                 <ChartTooltipContent

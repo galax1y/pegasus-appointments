@@ -1,17 +1,20 @@
 import { useContext, useEffect } from 'react'
 
+import { AppContext, AppContextType } from './context/app-context'
+
 import { Navbar } from './components/navbar'
 import { Projects } from './components/projects'
 import { Toaster } from './components/ui/sonner'
 import { Appointments } from './components/appointments'
-import { AppContext, AppContextType } from './context/app-context'
 
 function App() {
-  const { readProjects } = useContext(AppContext) as AppContextType
+  const { readProjects, readAppointments } = useContext(
+    AppContext
+  ) as AppContextType
 
-  // Initial data loading
   useEffect(() => {
     readProjects()
+    readAppointments()
   }, [])
 
   return (

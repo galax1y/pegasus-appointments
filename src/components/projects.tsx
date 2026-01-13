@@ -1,4 +1,4 @@
-import { useContext, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 
 import { toast } from 'sonner'
 
@@ -15,7 +15,11 @@ export function Projects() {
   const [name, setName] = useState<string>('')
   const { projects, createProject } = useContext(AppContext) as AppContextType
 
-  const projectsDataTable = mapProjectsToDataTable(projects)
+  const [projectsDataTable, setProjectsDataTable] = useState<ProjectDt[]>([])
+
+  useEffect(() => {
+    setProjectsDataTable(mapProjectsToDataTable(projects))
+  }, [projects])
 
   async function onSubmit() {
     if (name.length < 5) {
