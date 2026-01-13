@@ -111,7 +111,7 @@ export function ChartAreaInteractive() {
           </PopoverTrigger>
           <PopoverContent
             side='bottom'
-            className='dark w-auto p-0 overflow-hidden'
+            className='w-auto p-0 overflow-hidden'
             align='start'
           >
             <Calendar
@@ -134,7 +134,7 @@ export function ChartAreaInteractive() {
           >
             <SelectValue placeholder='Last 3 months' />
           </SelectTrigger>
-          <SelectContent className='dark rounded-xl'>
+          <SelectContent className='rounded-xl'>
             <SelectItem value='90d' className='rounded-lg'>
               Last 3 months
             </SelectItem>

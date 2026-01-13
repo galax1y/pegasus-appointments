@@ -131,7 +131,7 @@ export function Appointments() {
                           </Button>
                         </DropdownMenuTrigger>
 
-                        <DropdownMenuContent className='dark' align='end'>
+                        <DropdownMenuContent align='end'>
                           <DropdownMenuItem
                             onClick={() => handleDelete(a.id)}
                             className='text-destructive'

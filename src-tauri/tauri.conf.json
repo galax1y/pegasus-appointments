@@ -12,9 +12,13 @@
   "app": {
     "windows": [
       {
-        "title": "pegasus-appointments",
-        "width": 800,
-        "height": 600
+        "title": "Appointments | Pegasus",
+        "fullscreen": false,
+        "resizable": true,
+        "maximized": true,
+        "minWidth": 800,
+        "minHeight": 600,
+        "decorations": false
       }
     ],
     "security": {

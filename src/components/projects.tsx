@@ -49,9 +49,11 @@ export function Projects() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder='Create new project...'
-          className='placeholder:text-xs'
+          className='placeholder:text-xs shadow-sm'
         />
-        <Button onClick={onSubmit}>Create project</Button>
+        <Button onClick={onSubmit} className='shadow-lg'>
+          Create project
+        </Button>
       </div>
       <div className='mt-8'>
         <DataTable columns={columns} data={projectsDataTable} />

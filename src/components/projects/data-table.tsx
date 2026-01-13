@@ -36,7 +36,7 @@ export function DataTable<TData, TValue>({
   columns,
   data,
 }: DataTableProps<TData, TValue>) {
-  const [filter, setFilter] = useState<StatusFilter>('all')
+  const [filter, setFilter] = useState<StatusFilter>('active')
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -81,14 +81,14 @@ export function DataTable<TData, TValue>({
         <div>
           <Button
             size='sm'
-            className='mr-2'
+            className='mr-2 font-bold underline'
             onClick={handleFilterByDeactivated}
           >
             {filter === 'all' && 'All'}
             {filter === 'active' && 'Active'}
             {filter === 'inactive' && 'Deactivated'}
           </Button>{' '}
-          <span>projects</span>
+          <span className='font-medium'>projects</span>
         </div>
         <div className='flex items-center'>
           <Input
@@ -97,12 +97,12 @@ export function DataTable<TData, TValue>({
             onChange={(event) =>
               table.getColumn('name')?.setFilterValue(event.target.value)
             }
-            className='max-w-sm'
+            className='max-w-sm shadow-sm'
           />
         </div>
       </div>
 
-      <div className='overflow-hidden rounded-md border mt-3'>
+      <div className='overflow-hidden rounded-md border mt-3 shadow-sm'>
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (

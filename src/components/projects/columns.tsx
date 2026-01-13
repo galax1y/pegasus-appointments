@@ -153,7 +153,7 @@ export const columns: ColumnDef<ProjectDt>[] = [
       if (deactivated_at) {
         return <CircleX size={20} className='text-destructive' />
       } else {
-        return <CircleCheck size={20} color='green' />
+        return <CircleCheck size={20} className='text-secondary' />
       }
     },
   },

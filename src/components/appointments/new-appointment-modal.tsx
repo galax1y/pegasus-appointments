@@ -99,7 +99,7 @@ export function NewAppointmentModal({
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className='dark bg-background text-foreground'>
+      <DialogContent className='bg-background text-foreground'>
         <DialogHeader>
           <DialogTitle className='flex items-center'>
             <CirclePlus size={20} className='mr-2' />
@@ -171,7 +171,7 @@ export function NewAppointmentModal({
                         </PopoverTrigger>
                         <PopoverContent
                           side='bottom'
-                          className='dark w-auto p-0 overflow-hidden'
+                          className='w-auto p-0 overflow-hidden'
                           align='start'
                         >
                           <Calendar
@@ -236,7 +236,10 @@ export function NewAppointmentModal({
             <Button
               variant='outline'
               type='submit'
-              onClick={() => form.reset()}
+              onClick={() => {
+                setDate(undefined)
+                form.reset()
+              }}
             >
               Reset
             </Button>
