@@ -27,6 +27,12 @@ pub fn run() {
         },
     ];
 
+    #[cfg(target_os = "linux")]
+    {
+        // Solves a Linux WebKit / Wayland issue
+        std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
+    }
+    
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(

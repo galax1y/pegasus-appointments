@@ -1,4 +1,4 @@
-import { useContext, useEffect } from 'react'
+import { useContext } from 'react'
 import { AppContext, AppContextType } from '../context/app-context'
 
 import { toast } from 'sonner'
