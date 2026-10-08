@@ -24,7 +24,7 @@ The goal is simple: **make something cleaner, faster, and nicer to use** — rem
 
 ## ⚠️ Project Status
 
-- **Status:** Work in Progress (WIP)
+- **Status:** Done. No overengineering.
 - **Audience:** I'm the audience c:
 
 This project also exists as:
