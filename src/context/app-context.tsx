@@ -10,9 +10,17 @@ import {
   addDays,
   endOfDay,
   isBefore,
+  parseISO,
+  format,
   startOfDay,
   isWithinInterval,
 } from 'date-fns'
+
+const toLocalDateTime = (date: Date) =>
+  format(date, "yyyy-MM-dd'T'HH:mm:ss.SSS")
+
+const parseAppointmentDate = (date: string) =>
+  /^\d{4}-\d{2}-\d{2}$/.test(date) ? parseISO(date) : parseISO(date)
 
 export interface AppContextType {
   projects: Project[]
@@ -20,12 +28,13 @@ export interface AppContextType {
   readProjects: () => Promise<void>
   updateProject: (id: number, name: string) => Promise<void>
   deleteProject: (id: number) => Promise<void>
+  clearEverything: () => Promise<void>
 
   appointments: Appointment[]
   createAppointment: (
     title: string,
     date: string,
-    hours_allocated: number
+    hours_allocated: number,
   ) => Promise<void>
   readAppointments: () => Promise<void>
   deleteAppointment: (id: number) => Promise<void>
@@ -59,11 +68,11 @@ export const AppContextProvider: React.FC<{
   }
 
   const createProject = async (name: string) => {
-    const createdAt = new Date().toISOString()
+    const createdAt = toLocalDateTime(new Date())
 
     const response = await db.execute(
       'INSERT INTO projects (name, created_at, last_appointment_at) VALUES ($1, $2, $3)',
-      [name, createdAt, null]
+      [name, createdAt, null],
     )
 
     if (response.rowsAffected === 0) {
@@ -91,7 +100,7 @@ export const AppContextProvider: React.FC<{
   const updateProject = async (id: number, name: string) => {
     const response = await db.execute(
       'UPDATE projects SET name = $1 WHERE id = $2',
-      [name, id]
+      [name, id],
     )
 
     if (response.rowsAffected === 0) {
@@ -114,7 +123,7 @@ export const AppContextProvider: React.FC<{
           END
         WHERE id = $2
       `,
-      [now.toISOString(), id]
+      [toLocalDateTime(now), id],
     )
 
     if (response.rowsAffected === 0) {
@@ -124,10 +133,18 @@ export const AppContextProvider: React.FC<{
     refreshData()
   }
 
+  const clearEverything = async () => {
+    await db.execute('DELETE FROM appointments')
+    await db.execute('DELETE FROM projects')
+    setAppointments([])
+    setProjects([])
+    setSelectedProjectId(null)
+  }
+
   const createAppointment = async (
     title: string,
     date: string,
-    hours_allocated: number
+    hours_allocated: number,
   ) => {
     if (!selectedProjectId) {
       throw new Error('Error: No selected project')
@@ -135,7 +152,7 @@ export const AppContextProvider: React.FC<{
 
     const response = await db.execute(
       'INSERT INTO appointments (title, date, hours_allocated, project_id) VALUES ($1, $2, $3, $4)',
-      [title, date, hours_allocated, selectedProjectId]
+      [title, date, hours_allocated, selectedProjectId],
     )
 
     if (response.rowsAffected === 0) {
@@ -144,7 +161,7 @@ export const AppContextProvider: React.FC<{
 
     let rows: Pick<Project, 'last_appointment_at'>[] = await db.select(
       'SELECT last_appointment_at FROM projects WHERE id = $1 ORDER BY last_appointment_at DESC LIMIT 1',
-      [selectedProjectId]
+      [selectedProjectId],
     )
 
     let latestAppointment = rows[0].last_appointment_at
@@ -155,14 +172,17 @@ export const AppContextProvider: React.FC<{
 
     if (
       latestAppointment &&
-      isBefore(new Date(latestAppointment), new Date(date))
+      isBefore(
+        parseAppointmentDate(latestAppointment),
+        parseAppointmentDate(date),
+      )
     ) {
       latestAppointment = date
     }
 
     await db.execute(
       'UPDATE projects SET last_appointment_at = $1 WHERE id = $2',
-      [latestAppointment, selectedProjectId]
+      [latestAppointment, selectedProjectId],
     )
 
     refreshData()
@@ -180,12 +200,12 @@ export const AppContextProvider: React.FC<{
   const deleteAppointment = async (id: number) => {
     const response = await db.execute(
       `DELETE FROM appointments WHERE id = $1`,
-      [id]
+      [id],
     )
 
     if (response.rowsAffected === 0) {
       throw new Error(
-        'Error: Something went wrong while deleting the appointment'
+        'Error: Something went wrong while deleting the appointment',
       )
     }
 
@@ -197,7 +217,7 @@ export const AppContextProvider: React.FC<{
         ORDER BY date DESC
         LIMIT 1
       `,
-      [selectedProjectId]
+      [selectedProjectId],
     )
 
     const latestAppointment: string | null =
@@ -209,7 +229,7 @@ export const AppContextProvider: React.FC<{
         SET last_appointment_at = $1
         WHERE id = $2
       `,
-      [latestAppointment, selectedProjectId]
+      [latestAppointment, selectedProjectId],
     )
 
     refreshData()
@@ -217,11 +237,11 @@ export const AppContextProvider: React.FC<{
 
   const getActivitySummaryInInterval = async (
     start: Date,
-    end: Date
+    end: Date,
   ): Promise<Activity[]> => {
     const appointments = (await db.select(
       'SELECT * FROM appointments WHERE date BETWEEN $1 AND $2',
-      [startOfDay(start).toISOString(), endOfDay(end).toISOString()]
+      [toLocalDateTime(startOfDay(start)), toLocalDateTime(endOfDay(end))],
     )) as Appointment[]
 
     let currentDate = startOfDay(start)
@@ -231,17 +251,17 @@ export const AppContextProvider: React.FC<{
 
     while (currentDate < endDate) {
       const appointmentsInCurrentDate = appointments.filter((a) =>
-        isWithinInterval(a.date, {
+        isWithinInterval(parseAppointmentDate(a.date), {
           start: currentDate,
           end: endOfDay(currentDate),
-        })
+        }),
       )
 
       activities.push({
-        date: currentDate.toISOString(),
+        date: format(currentDate, 'yyyy-MM-dd'),
         hours_allocated: appointmentsInCurrentDate.reduce(
           (agg, appointment) => agg + appointment.hours_allocated,
-          0
+          0,
         ),
         appointments: appointmentsInCurrentDate,
       })
@@ -265,6 +285,7 @@ export const AppContextProvider: React.FC<{
         readProjects,
         updateProject,
         deleteProject,
+        clearEverything,
         appointments,
         createAppointment,
         readAppointments,

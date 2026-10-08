@@ -39,7 +39,7 @@ const newAppointmentSchema = z.object({
     .positive({ error: 'Insert how many hours have been allocated.' }),
 })
 
-interface NewAppointmentModal {
+interface NewAppointmentModalProps {
   selectedProjectId: number | null
   trigger: React.ReactNode
 }
@@ -47,7 +47,7 @@ interface NewAppointmentModal {
 export function NewAppointmentModal({
   trigger,
   selectedProjectId,
-}: NewAppointmentModal) {
+}: NewAppointmentModalProps) {
   const [open, setOpen] = useState(false)
   const [date, setDate] = useState<Date | undefined>(new Date())
 
@@ -118,7 +118,7 @@ export function NewAppointmentModal({
             Create appointment
           </DialogTitle>
           <DialogDescription>
-            Project: {projects.find((p) => p.id === selectedProjectId)?.name}
+            {projects.find((p) => p.id === selectedProjectId)?.name}
           </DialogDescription>
         </DialogHeader>
 

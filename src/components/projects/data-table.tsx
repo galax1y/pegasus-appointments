@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useContext, useState } from 'react'
 
 import { Input } from '../ui/input'
 import { Button } from '../ui/button'
@@ -26,6 +26,19 @@ import {
 } from '@/components/ui/table'
 
 import { StatusFilter } from './columns'
+import { Trash2 } from 'lucide-react'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
+import { AppContext, AppContextType } from '@/context/app-context'
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -36,11 +49,12 @@ export function DataTable<TData, TValue>({
   columns,
   data,
 }: DataTableProps<TData, TValue>) {
+  const { clearEverything } = useContext(AppContext) as AppContextType
   const [filter, setFilter] = useState<StatusFilter>('active')
   const [sorting, setSorting] = React.useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  )
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([
+    { id: 'deactivated_at', value: 'active' },
+  ])
   const [rowSelection, setRowSelection] = React.useState({})
 
   const table = useReactTable({
@@ -75,12 +89,14 @@ export function DataTable<TData, TValue>({
       setFilter('all')
     }
   }
+
   return (
     <>
       <div className='w-full flex items-center justify-between'>
-        <div>
+        <div className='flex items-center'>
           <Button
             size='sm'
+            variant='secondary'
             className='mr-2 font-bold underline'
             onClick={handleFilterByDeactivated}
           >
@@ -89,16 +105,37 @@ export function DataTable<TData, TValue>({
             {filter === 'inactive' && 'Deactivated'}
           </Button>{' '}
           <span className='font-medium'>projects</span>
-        </div>
-        <div className='flex items-center'>
           <Input
             placeholder='Filter projects by name...'
             value={(table.getColumn('name')?.getFilterValue() as string) ?? ''}
             onChange={(event) =>
               table.getColumn('name')?.setFilterValue(event.target.value)
             }
-            className='max-w-sm shadow-sm'
+            className='ml-2 max-w-sm shadow-sm placeholder:text-xs'
           />
+        </div>
+        <div className='flex items-center gap-2'>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant='destructive'>
+                <Trash2 /> Full wipe
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Clear all projects?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. All projects will be removed.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={clearEverything}>
+                  Clear projects
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
 
@@ -114,7 +151,7 @@ export function DataTable<TData, TValue>({
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                     </TableHead>
                   )
@@ -133,7 +170,7 @@ export function DataTable<TData, TValue>({
                     <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}

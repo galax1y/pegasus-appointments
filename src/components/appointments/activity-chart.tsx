@@ -8,6 +8,7 @@ import { Activity } from '@/models/activity'
 import { addMonths, format } from 'date-fns'
 import { ptBR } from 'date-fns/locale/pt-BR'
 import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts'
+import { parseISO } from 'date-fns'
 
 import { Button } from '../ui/button'
 import { Calendar } from '../ui/calendar'
@@ -37,28 +38,35 @@ import {
 } from '@/components/ui/select'
 
 import { ChevronDownIcon } from 'lucide-react'
+import { Badge } from '../ui/badge'
 
-const chartConfig = {
-  hours_allocated: {
-    label: 'Hours allocated',
-    color: 'var(--chart-3)',
-  },
-} satisfies ChartConfig
+const PALETTE = [
+  'var(--chart-1)',
+  'var(--chart-2)',
+  'var(--chart-3)',
+  'var(--chart-4)',
+  'var(--chart-5)',
+]
+
+// Date-only values are calendar days, not UTC instants.
+function parseLocalDate(value: string | Date) {
+  if (value instanceof Date) return value
+  return parseISO(value)
+}
 
 export function ChartAreaInteractive() {
   const [referenceDate, setReferenceDate] = React.useState<Date>(
-    () => new Date()
+    () => new Date(),
   )
-  const { getActivitySummaryInInterval, appointments } = React.useContext(
-    AppContext
-  ) as AppContextType
+  const { getActivitySummaryInInterval, appointments, projects } =
+    React.useContext(AppContext) as AppContextType
 
   const [activities, setActivities] = React.useState<Activity[]>([])
 
   const [timeRange, setTimeRange] = React.useState('30d')
 
   const filteredData = activities.filter((item) => {
-    const date = new Date(item.date)
+    const date = parseLocalDate(item.date)
 
     let daysToSubtract = 90
     if (timeRange === '30d') {
@@ -71,10 +79,68 @@ export function ChartAreaInteractive() {
     return date >= startDate
   })
 
+  const totalHours = filteredData.reduce(
+    (total, item) => total + Number(item.hours_allocated || 0),
+    0,
+  )
+
+  const totalProjects = new Set(
+    filteredData
+      .flatMap((item) => item.appointments ?? [])
+      .map((appointment) => appointment.project_id)
+      .filter(Boolean),
+  ).size
+
+  // id -> nome, montado a partir dos appointments
+  const projectNames = React.useMemo(() => {
+    const map = new Map<string | number, string>()
+    for (const item of filteredData) {
+      for (const a of item.appointments ?? []) {
+        if (!a.project_id || map.has(a.project_id)) continue
+        const name = projects?.find((p) => p.id === a.project_id)?.name
+        map.set(a.project_id, name ?? `Project ${a.project_id}`)
+      }
+    }
+    return map
+  }, [filteredData, projects])
+
+  const projectKeys = React.useMemo(
+    () => Array.from(projectNames.keys()),
+    [projectNames],
+  )
+
+  // uma linha por dia: { date, p_12: 3, p_15: 2, ... }
+  const chartData = React.useMemo(
+    () =>
+      filteredData.map((item) => {
+        const row: Record<string, string | number> = { date: item.date }
+        for (const a of item.appointments ?? []) {
+          if (!a.project_id) continue
+          const key = `p_${a.project_id}`
+          row[key] = Number(row[key] ?? 0) + Number(a.hours_allocated || 0)
+        }
+        return row
+      }),
+    [filteredData],
+  )
+
+  const chartConfig = React.useMemo(
+    () =>
+      Object.fromEntries(
+        projectKeys.map((id, i) => [
+          `p_${id}`,
+          {
+            label: projectNames.get(id),
+            color: PALETTE[i % PALETTE.length],
+          },
+        ]),
+      ) satisfies ChartConfig,
+    [projectKeys, projectNames],
+  )
   React.useEffect(() => {
     getActivitySummaryInInterval(
       addMonths(referenceDate, -1.5),
-      addMonths(referenceDate, +1.5)
+      addMonths(referenceDate, +1.5),
     ).then((response) => setActivities(response))
   }, [referenceDate, appointments])
 
@@ -145,81 +211,63 @@ export function ChartAreaInteractive() {
           config={chartConfig}
           className='aspect-auto h-62.5 w-full'
         >
-          <BarChart data={filteredData}>
-            <defs>
-              <linearGradient id='fillHours' x1='0' y1='0' x2='0' y2='1'>
-                <stop
-                  offset='5%'
-                  stopColor='var(--color-hours_allocated)'
-                  stopOpacity={0.8}
-                />
-                <stop
-                  offset='95%'
-                  stopColor='var(--color-hours_allocated)'
-                  stopOpacity={0.1}
-                />
-              </linearGradient>
-            </defs>
+          <BarChart data={chartData}>
             <CartesianGrid vertical={false} />
             <XAxis
               dataKey='date'
-              tickLine={true}
-              axisLine={true}
+              tickLine
+              axisLine
               tickMargin={8}
               minTickGap={32}
-              tickFormatter={(value) => {
-                const date = new Date(value)
-                return date.toLocaleDateString('en-US', {
+              tickFormatter={(value) =>
+                parseLocalDate(value).toLocaleDateString('en-US', {
                   month: 'short',
                   day: 'numeric',
                 })
-              }}
+              }
             />
             <ChartTooltip
-              cursor={true}
-              labelClassName='border-b mb-1'
+              cursor
               content={
                 <ChartTooltipContent
-                  labelFormatter={(value) => {
-                    return (
-                      <span>
-                        {format(new Date(value), 'P', { locale: ptBR })}
-                      </span>
-                    )
-                  }}
-                  formatter={(value, _, i) => {
-                    return (
-                      <div className='flex flex-col'>
-                        <div className='whitespace-nowrap flex items-center'>
-                          <div className='w-2.5 h-2.5 bg-chart-3 rounded-xs mr-2' />
-                          <span>{value} Hours</span>
-                        </div>
-                        <div className='whitespace-nowrap flex items-center'>
-                          <div className='w-2.5 h-2.5 bg-chart-2 rounded-xs mr-2' />
-                          <span>
-                            {i.payload.appointments.length}{' '}
-                            {i.payload.appointments.length > 0
-                              ? 'Appointment'
-                              : 'Appointments'}
-                          </span>
-                        </div>
-                      </div>
-                    )
-                  }}
                   indicator='dot'
+                  labelClassName='border-b mb-1'
+                  labelFormatter={(value) => (
+                    <span>
+                      {format(parseLocalDate(value), 'P', { locale: ptBR })}
+                    </span>
+                  )}
                 />
               }
             />
-            <Bar
-              dataKey='hours_allocated'
-              fill='url(#fillHours)'
-              stroke='var(--color-hours_allocated)'
-              stackId='a'
-            />
-
-            {/* <ChartLegend content={<ChartLegendContent />} /> */}
+            {projectKeys.map((id) => (
+              <Bar
+                key={id}
+                dataKey={`p_${id}`}
+                stackId='a'
+                fill={`var(--color-p_${id})`}
+              />
+            ))}
           </BarChart>
         </ChartContainer>
+        <div className='flex flex-wrap items-center justify-between gap-4 border-t px-4 pt-4 text-sm'>
+          <div>
+            <span className='text-muted-foreground mr-2'>
+              Total hours worked:
+            </span>
+            <Badge variant='secondary' className='font-semibold'>
+              {totalHours.toLocaleString()} hours
+            </Badge>
+          </div>
+          <div>
+            <span className='text-muted-foreground mr-2'>
+              Projects worked on:
+            </span>
+            <Badge variant='secondary' className='font-semibold'>
+              {totalProjects}
+            </Badge>
+          </div>
+        </div>
       </CardContent>
     </Card>
   )

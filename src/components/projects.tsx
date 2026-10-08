@@ -10,6 +10,7 @@ import { Button } from './ui/button'
 
 import { DataTable } from './projects/data-table'
 import { columns, ProjectDt } from './projects/columns'
+import { PlusIcon } from 'lucide-react'
 
 export function Projects() {
   const [name, setName] = useState<string>('')
@@ -53,10 +54,10 @@ export function Projects() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder='Create new project...'
-          className='placeholder:text-xs shadow-sm'
+          className='shadow-sm'
         />
         <Button onClick={onSubmit} className='shadow-lg'>
-          Create project
+          <PlusIcon /> Create project
         </Button>
       </div>
       <div className='mt-8'>

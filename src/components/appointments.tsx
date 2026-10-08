@@ -2,7 +2,7 @@ import { useContext } from 'react'
 import { AppContext, AppContextType } from '../context/app-context'
 
 import { toast } from 'sonner'
-import { format } from 'date-fns'
+import { format, parseISO } from 'date-fns'
 
 import { Button } from './ui/button'
 import { Separator } from './ui/separator'
@@ -17,13 +17,15 @@ import {
 } from './ui/dropdown-menu'
 
 import {
-  Plus,
   Trash,
   Folder,
   Calendar,
   CalendarX,
   MoreHorizontal,
+  TimerIcon,
+  PlusIcon,
 } from 'lucide-react'
+import { AppointmentTimerModal } from './appointments/appointment-timer-modal'
 
 export function Appointments() {
   const { projects, selectedProjectId, appointments, deleteAppointment } =
@@ -62,12 +64,20 @@ export function Appointments() {
                 </span>
               </div>
             </div>
-            <div>
+            <div className='flex items-center gap-2'>
+              <AppointmentTimerModal
+                selectedProjectId={selectedProjectId}
+                trigger={
+                  <Button size='sm' disabled={!selectedProjectId}>
+                    <TimerIcon /> Cronometer
+                  </Button>
+                }
+              />
               <NewAppointmentModal
                 selectedProjectId={selectedProjectId}
                 trigger={
                   <Button size='sm' disabled={!selectedProjectId}>
-                    New appointment
+                    <PlusIcon /> New appointment
                   </Button>
                 }
               />
@@ -107,7 +117,12 @@ export function Appointments() {
 
                     <div className='flex items-center gap-3'>
                       <span className='text-sm font-semibold'>
-                        {format(a.date, 'PP')}
+                        {format(
+                          typeof a.date === 'string'
+                            ? parseISO(a.date)
+                            : a.date,
+                          'PP',
+                        )}
                       </span>
 
                       <DropdownMenu>
