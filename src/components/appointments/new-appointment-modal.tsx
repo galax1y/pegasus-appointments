@@ -23,7 +23,7 @@ import {
   DialogDescription,
 } from '../ui/dialog'
 
-import { ChevronDownIcon, CirclePlus } from 'lucide-react'
+import { ChevronDownIcon } from 'lucide-react'
 
 const newAppointmentSchema = z.object({
   title: z
@@ -49,10 +49,10 @@ export function NewAppointmentModal({
   selectedProjectId,
 }: NewAppointmentModal) {
   const [open, setOpen] = useState(false)
-  const [date, setDate] = useState<Date | undefined>(undefined)
+  const [date, setDate] = useState<Date | undefined>(new Date())
 
   const { createAppointment, projects } = useContext(
-    AppContext
+    AppContext,
   ) as AppContextType
 
   const form = useForm({
@@ -75,7 +75,7 @@ export function NewAppointmentModal({
         createAppointment(
           value.title,
           date.toISOString(),
-          value.hours_allocated
+          value.hours_allocated,
         ),
         {
           success: () => {
@@ -83,7 +83,7 @@ export function NewAppointmentModal({
             return 'Appointment was created successfully.'
           },
           error: 'Something went wrong while creating the appointment.',
-        }
+        },
       )
     },
     onSubmitInvalid: () => {
@@ -96,10 +96,17 @@ export function NewAppointmentModal({
     if (isOpening && !selectedProjectId) {
       setOpen(false)
       return toast.error(
-        'First select a project to allocate the new appointment.'
+        'First select a project to allocate the new appointment.',
       )
     }
     setOpen(newState)
+  }
+
+  const handleHoursChange = (value: string) => {
+    const normalizedValue = value.replace(',', '.')
+    const numberValue = Number(normalizedValue)
+
+    return Number.isNaN(numberValue) ? 0 : numberValue
   }
 
   return (
@@ -108,8 +115,7 @@ export function NewAppointmentModal({
       <DialogContent className='bg-background text-foreground'>
         <DialogHeader>
           <DialogTitle className='flex items-center'>
-            <CirclePlus size={20} className='mr-2' />
-            Create new appointment
+            Create appointment
           </DialogTitle>
           <DialogDescription>
             Project: {projects.find((p) => p.id === selectedProjectId)?.name}
@@ -215,13 +221,9 @@ export function NewAppointmentModal({
                         name={field.name}
                         value={field.state.value}
                         onBlur={field.handleBlur}
-                        onChange={(e) => {
-                          const isNan = Number.isNaN(e.target.value)
-
-                          field.handleChange(
-                            !isNan ? Number(e.target.value) : 0
-                          )
-                        }}
+                        onChange={(e) =>
+                          field.handleChange(handleHoursChange(e.target.value))
+                        }
                         placeholder='Insert how many hours you have worked on this appointment for this date.'
                         aria-invalid={isInvalid}
                         autoComplete='off'

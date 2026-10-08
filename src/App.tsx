@@ -9,7 +9,7 @@ import { Appointments } from './components/appointments'
 
 function App() {
   const { readProjects, readAppointments } = useContext(
-    AppContext
+    AppContext,
   ) as AppContextType
 
   useEffect(() => {
@@ -21,7 +21,7 @@ function App() {
     <div className='bg-background text-foreground min-h-screen'>
       <Navbar />
       <main className='relative flex flex-col'>
-        <div className='self-center container grid lg:grid-cols-2 w-full flex-1 gap-6 my-6'>
+        <div className='self-center container grid lg:grid-cols-2 w-full flex-1 gap-6 my-6 px-6'>
           <Projects />
           <Appointments />
         </div>

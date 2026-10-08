@@ -9,7 +9,7 @@ export function Navbar() {
   const appWindow = getCurrentWindow()
 
   return (
-    <nav className='relative h-8 w-full backdrop-blur border-b shadow-sm'>
+    <nav className='relative h-8 w-full backdrop-blur shadow-sm bg-accent outline-1'>
       <div
         data-tauri-drag-region
         className='flex items-center justify-between h-full'

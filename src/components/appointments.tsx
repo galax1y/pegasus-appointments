@@ -29,6 +29,8 @@ export function Appointments() {
   const { projects, selectedProjectId, appointments, deleteAppointment } =
     useContext(AppContext) as AppContextType
 
+  const selectedProject = projects.find((p) => p.id === selectedProjectId)
+
   const handleDelete = async (id: number) => {
     return toast.promise(deleteAppointment(id), {
       success: 'Appointment was successfully deleted.',
@@ -49,12 +51,14 @@ export function Appointments() {
 
               <div className='flex flex-col'>
                 <h2 className='text-lg font-semibold leading-none'>
-                  {projects.find((p) => p.id === selectedProjectId)?.name ??
-                    'Select a project'}
+                  {selectedProject?.name ?? 'Select a project'}
                 </h2>
 
                 <span className='mt-1 text-xs text-muted-foreground'>
-                  These are all this project's appointments
+                  {selectedProject?.name
+                    ? `${selectedProject.name}'s`
+                    : "Select a project's"}{' '}
+                  latest appointments
                 </span>
               </div>
             </div>
@@ -62,12 +66,8 @@ export function Appointments() {
               <NewAppointmentModal
                 selectedProjectId={selectedProjectId}
                 trigger={
-                  <Button
-                    variant='outline'
-                    size='icon-sm'
-                    disabled={!selectedProjectId}
-                  >
-                    <Plus />
+                  <Button size='sm' disabled={!selectedProjectId}>
+                    New appointment
                   </Button>
                 }
               />
@@ -82,7 +82,7 @@ export function Appointments() {
                 <h3 className='text-sm font-semibold'>No appointments yet</h3>
 
                 <p className='text-sm text-muted-foreground mt-1 max-w-sm'>
-                  This project doesn’t have any appointments scheduled.
+                  This project doesn&apos;t have any appointments.
                 </p>
               </div>
             ) : (
